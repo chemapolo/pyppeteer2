@@ -87,10 +87,11 @@ def download_zip(url: str) -> BytesIO:
         http = urllib3.ProxyManager(HTTPS_PROXY)
     else:
         http = urllib3.PoolManager()
-        
+
         # Get data from url.
         # set preload_content=False means using stream later.
         data = http.request('GET', url, preload_content=False)
+        logger.warning(f'Using URL: {url}')
 
         try:
             total_length = int(data.headers['content-length'])
