@@ -27,13 +27,16 @@ BASE_URL = f'{DOWNLOAD_HOST}/chromium-browser-snapshots'
 REVISION = os.environ.get(
     'PYPPETEER_CHROMIUM_REVISION', __chromium_revision__)
 
+HTTP_PROXY = os.environ.get('HTTP_PROXY', '')
+HTTPS_PROXY = os.environ.get('HTTPS_PROXY', HTTP_PROXY)
+
 NO_PROGRESS_BAR = os.environ.get('PYPPETEER_NO_PROGRESS_BAR', '')
 if NO_PROGRESS_BAR.lower() in ('1', 'true'):
     NO_PROGRESS_BAR = True  # type: ignore
 
 # Windows archive name changed at r591479.
 windowsArchive = 'chrome-win' if int(REVISION) > 591479 else 'chrome-win32'
-    
+
 downloadURLs = {
     'linux': f'{BASE_URL}/Linux_x64/{REVISION}/chrome-linux.zip',
     'mac': f'{BASE_URL}/Mac/{REVISION}/chrome-mac.zip',
@@ -79,7 +82,12 @@ def download_zip(url: str) -> BytesIO:
     # see https://urllib3.readthedocs.io/en/latest/advanced-usage.html for more
     urllib3.disable_warnings()
 
-    with urllib3.PoolManager() as http:
+    if HTTPS_PROXY:
+        logger.warning(f'Using proxy: {HTTPS_PROXY}')
+        http = urllib3.ProxyManager(HTTPS_PROXY)
+    else:
+        http = urllib3.PoolManager()
+        
         # Get data from url.
         # set preload_content=False means using stream later.
         data = http.request('GET', url, preload_content=False)
